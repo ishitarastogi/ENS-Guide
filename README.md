@@ -1,4 +1,4 @@
-# ENS v1 & v2: Understanding Ethereum Name Service
+# What is ENS v2and How it is different from ENSV1?
 
 ## What is ENS v1?
 
@@ -20,7 +20,7 @@ These components work together in a two-step resolution process:
 
 This architecture has been reliable and battle-tested for years. However, it was designed when Ethereum existed only on L1, and today's ecosystem looks very different.
 
-<img width="901" height="678" alt="Screenshot 2026-01-07 at 3 40 25 PM" src="https://github.com/user-attachments/assets/0a733d73-26c8-4c31-8125-8b6ba26d412e" />
+<img width="1528" height="1161" alt="HOW ENSV1 WORKS?" src="https://github.com/user-attachments/assets/f9857717-6f27-487a-b526-2d94be9365f7" />
 
 
 ## The Evolution: Why v2?
@@ -58,7 +58,8 @@ ENS v2 is a fundamental architectural redesign that moves the `.eth` registry to
 ENS v1 uses one global contract to store every name in a flat mapping. Think of it as a single giant database table where `alice.eth` and `bob.alice.eth` are just separate entries with no real parent-child relationship.
 
 This simplicity comes with limits: no per-name logic, no native expiration, and no way to manage subtrees atomically.
-<img width="676" height="493" alt="Screenshot 2026-01-07 at 3 42 13 PM" src="https://github.com/user-attachments/assets/49c0c38e-0e47-4244-8aee-ea3f8c2f266d" />
+
+<img width="1082" height="824" alt="SingeRegistry" src="https://github.com/user-attachments/assets/78a5fd15-a9c2-45f2-8e36-d73f048d13da" />
 
 #### v2 = Hierarchical Tree of Registries
 
@@ -69,6 +70,7 @@ ENS v2 restructures the system: each name becomes its own registry contract, res
 - `alice.eth` manages all `*.alice.eth` names
 
 Each level is responsible only for the names directly beneath it, forming a clean, modular tree instead of one giant table.
+
 
 <img width="568" height="734" alt="Screenshot 2026-01-07 at 3 43 57 PM" src="https://github.com/user-attachments/assets/ba79f85e-c159-47d0-96f0-773ef1faea19" />
 
@@ -152,7 +154,8 @@ interface IRegistryDatastore {
 
 **Universal Resolver**: In v1, every app had to implement resolution logic themselves, find the registry, find the resolver, handle edge cases. v2 introduces the Universal Resolver: one contract that handles all resolution logic. Developers call one function, it works for v1 names, v2 names on L1, and v2 names on L2 automatically. Future upgrades only need to update the Universal Resolver, apps benefit without code changes.
 
-<img width="1008" height="614" alt="Screenshot 2026-01-07 at 3 42 45 PM" src="https://github.com/user-attachments/assets/0aeaa385-e1b8-4e59-9547-b684362f31ce" />
+<img width="2523" height="1607" alt="UniversalResolver" src="https://github.com/user-attachments/assets/5ebcfc9b-b37d-46fd-afc3-18d6d64c54c0" />
+
 
 ### How Resolution Actually Works
 
