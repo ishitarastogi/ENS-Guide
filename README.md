@@ -191,6 +191,10 @@ Resolving `foo.2ld.eth`:
 
 Since `foo` doesn't have its own registry, the parent's resolver (`2ld.eth`) handles it—this is **wildcard resolution**.
 
+### L2 Resolution
+
+When names live on L2, this same process happens using **CCIP-Read**, which uses cryptographic proofs to fetch data from L2 securely.
+
 ## Moving Forward with ENS v2
 
 ENS v2 moves `.eth` to L2 for cheaper operations while letting owners "eject" names to L1 for maximum security, names can move between chains anytime. Unmigrated v1 names keep working automatically via the Fallback Resolver, and migration is optional (choose L2 for cost or L1 for guarantees). 
