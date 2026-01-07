@@ -13,13 +13,15 @@ ENS v1 is built on three core components:
 3. **Registrars**: Contracts that allocate names to users (like the `.eth` registrar that manages all `.eth` name registrations)
 
 ### Resolution Process
-
 These components work together in a two-step resolution process:
 
 1. Query the registry to find the resolver assigned to a name
 2. Query that resolver to fetch the actual record (e.g., ETH address, content hash)
 
 This architecture has been reliable and battle-tested for years. However, it was designed when Ethereum existed only on L1, and today's ecosystem looks very different.
+
+<img width="901" height="678" alt="Screenshot 2026-01-07 at 3 40 25 PM" src="https://github.com/user-attachments/assets/0a733d73-26c8-4c31-8125-8b6ba26d412e" />
+
 
 ## The Evolution: Why v2?
 
@@ -56,6 +58,7 @@ ENS v2 is a fundamental architectural redesign that moves the `.eth` registry to
 ENS v1 uses one global contract to store every name in a flat mapping. Think of it as a single giant database table where `alice.eth` and `bob.alice.eth` are just separate entries with no real parent-child relationship.
 
 This simplicity comes with limits: no per-name logic, no native expiration, and no way to manage subtrees atomically.
+<img width="676" height="493" alt="Screenshot 2026-01-07 at 3 42 13 PM" src="https://github.com/user-attachments/assets/49c0c38e-0e47-4244-8aee-ea3f8c2f266d" />
 
 #### v2 = Hierarchical Tree of Registries
 
@@ -66,6 +69,8 @@ ENS v2 restructures the system: each name becomes its own registry contract, res
 - `alice.eth` manages all `*.alice.eth` names
 
 Each level is responsible only for the names directly beneath it, forming a clean, modular tree instead of one giant table.
+
+<img width="568" height="734" alt="Screenshot 2026-01-07 at 3 43 57 PM" src="https://github.com/user-attachments/assets/ba79f85e-c159-47d0-96f0-773ef1faea19" />
 
 ### Registries as ERC-1155 NFT Collections
 
@@ -125,6 +130,7 @@ interface IRegistryDatastore {
 
 **Storage split:**
 - **Datastore stores**: Subregistry addresses, resolver addresses, flags (for custom data like expiration timestamps)
+
 - **Registry contract stores**: NFT ownership, custom logic (transfer rules, access controls)
 
 ### What This Design Unlocks
@@ -137,6 +143,7 @@ interface IRegistryDatastore {
 
 **Built-in NFT Support**: Every registry is ERC-1155, so subdomains are NFTs automatically. No wrapper contract needed. OpenSea, wallets, and NFT infrastructure recognize ENS subdomains natively, transfers and marketplaces just work.
 
+
 ## Resolution: Finding and Querying the Right Resolver
 
 ### The Components
@@ -144,6 +151,8 @@ interface IRegistryDatastore {
 **Resolvers**: Unchanged from v1. A resolver stores your name's data, ETH address, avatar, Twitter handle. When someone looks up your name, they query your resolver.
 
 **Universal Resolver**: In v1, every app had to implement resolution logic themselves, find the registry, find the resolver, handle edge cases. v2 introduces the Universal Resolver: one contract that handles all resolution logic. Developers call one function, it works for v1 names, v2 names on L1, and v2 names on L2 automatically. Future upgrades only need to update the Universal Resolver, apps benefit without code changes.
+
+<img width="1008" height="614" alt="Screenshot 2026-01-07 at 3 42 45 PM" src="https://github.com/user-attachments/assets/0aeaa385-e1b8-4e59-9547-b684362f31ce" />
 
 ### How Resolution Actually Works
 
