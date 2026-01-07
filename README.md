@@ -1,4 +1,4 @@
-# What is ENS v2and How it is different from ENSV1?
+# What is ENS v2 and How it is different from ENSV1?
 
 ## What is ENS v1?
 
