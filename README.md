@@ -13,7 +13,7 @@ ENS v1 is built on three core components:
 3. **Registrars**: Contracts that allocate names to users (like the `.eth` registrar that manages all `.eth` name registrations)
 
 ### Resolution Process
-These components work together in a two-step resolution process:
+These components work together in a two-step resolution process: 
 
 1. Query the registry to find the resolver assigned to a name
 2. Query that resolver to fetch the actual record (e.g., ETH address, content hash)
@@ -93,33 +93,40 @@ alice.eth Registry (ERC-1155 Collection)
 
 ### Technical Architecture of Registries
 
-#### The L2 Problem
+In ENS v2, **each name gets its own registry contract** so the owner has full control over their subnames.
+```
+alice.eth → alice.eth Registry (Alice's control)
+bob.eth → bob.eth Registry (Bob's control)
+```
 
-On L2, you need cryptographic proofs. More contracts = more proofs = expensive. ENS v2 puts all resolution data in one shared contract—1 proof instead of many.
+This gives each owner independence to manage their subnames with custom rules.
 
-#### The Two-Contract System
+---
 
-1. **Registry contracts** (one per name): Handle ownership, transfers, custom rules
-2. **RegistryDatastore** (one shared): Stores resolution data for everyone
+## IRegistry Interface
 
-When `alice.eth` registry is asked "what's wallet's resolver?", it looks up the answer in the Datastore.
-
-#### 1. IRegistry Interface
-
-Every registry must implement this standard interface:
-
-```solidity
+Every registry contract must implement the IRegistry interface:
+```javascript
 interface IRegistry is IERC1155 {
     event NewSubname(string label);
     
-    function getSubregistry(string calldata label) external view returns (address);
-    function getResolver(string calldata label) external view returns (address);
+    function getSubregistry(string label) external view returns (address);
+    function getResolver(string label) external view returns (address);
 }
 ```
 
-#### 2. RegistryDatastore
+This interface defines how registries report which subregistry handles a subdomain and which resolver stores its data. Each registry is also an ERC-1155 NFT collection, where each subdomain is a token.
 
-A single shared contract that stores ALL resolver and subregistry addresses for ALL registries.
+
+## The L2 Challenge
+
+With hundreds or thousands of registry contracts, a problem emerges for L2 resolution: **cryptographic proofs**. On L2, verifying data from another chain requires proving the storage state of each contract. If alice.eth Registry stores data in its own contract, bob.eth Registry in its own, and so on, you'd need separate proofs for every single registry. More contracts to prove = more expensive L2 operations.
+
+
+## IRegistryDatastore: Centralized Storage
+
+To solve this, ENS v2 introduces a single shared storage contract called RegistryDatastore:
+
 
 ```solidity
 interface IRegistryDatastore {
@@ -159,20 +166,30 @@ interface IRegistryDatastore {
 
 ### How Resolution Actually Works
 
+### Regular Resolution: `pay.alice.eth` (subdomain with its own resolver)
+
+Resolving `pay.alice.eth` where `pay` has its own resolver:
+
+1. Root Registry → "Where's .eth?" → Returns .eth Registry address
+2. .eth Registry → "Where's alice?" → Returns alice.eth Registry address
+3. alice.eth Registry → "Where's pay?" → Returns resolver: `0x456`
+4. Use the resolver → `0x456` from step 3
+5. Query resolver → "What's the ETH address for pay.alice.eth?" → Returns address
+
+Since `pay` has its own resolver configured, we use that specific resolver.
+
+---
+
+### Wildcard Resolution: `foo.2ld.eth` (subdomain without its own resolver)
+
 Resolving `foo.2ld.eth`:
 
-1. **Root Registry** → "Where's .eth?" → Returns .eth Registry address
-2. **.eth Registry** → "Where's 2ld?" → No registry, but returns resolver: `0xResolver1`
-3. **Use closest resolver** → `0xResolver1` from step 2
-4. **Query resolver** → "What's the ETH address for foo.2ld.eth?" → Returns address
+1. Root Registry → "Where's .eth?" → Returns .eth Registry address
+2. .eth Registry → "Where's 2ld?" → No registry, but returns resolver: `0xResolver1`
+3. Use closest resolver → `0xResolver1` from step 2
+4. Query resolver → "What's the ETH address for foo.2ld.eth?" → Returns address
 
-Since `foo` doesn't have its own registry, the parent's resolver (`2ld.eth`) handles it, this is wildcard resolution.
-
-### Why This Works: Wildcard Resolution
-
-Notice that `foo.2ld.eth` doesn't actually exist as a separate entry, there's no registry for it. But the resolver for `2ld.eth` can still answer questions about it. This is called wildcard resolution: a parent's resolver can handle all its subdomains, even ones that don't explicitly exist.
-
-**L2 Resolution**: When names live on L2, this same process happens using CCIP-Read, which uses cryptographic proofs to fetch data from L2 securely.
+Since `foo` doesn't have its own registry, the parent's resolver (`2ld.eth`) handles it—this is **wildcard resolution**.
 
 ## Moving Forward with ENS v2
 
